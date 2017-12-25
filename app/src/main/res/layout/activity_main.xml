@@ -7,6 +7,14 @@
     android:layout_height="match_parent"
     tools:context="cn.yzhg.permission.MainActivity">
 
+    <Button
+        android:id="@+id/but_permission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="点击获取权限"
+        android:textColor="#262626"
+        android:textSize="20dp"/>
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

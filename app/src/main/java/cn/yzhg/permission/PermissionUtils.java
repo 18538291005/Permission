@@ -2,7 +2,10 @@ package cn.yzhg.permission;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -42,60 +45,54 @@ public class PermissionUtils {
     // 允许程序录制声音通过手机或耳机的麦克
     public static final String SEND_SMS = Manifest.permission.SEND_SMS;   //允许程序发送短信
 
-
-    String Title = "权限申请";
-    String message = "您还没有申请该权限";
-    String negative = "取消";
-    String positive = "去设置";
-
-    public static class builder {
-        private String Title = "权限申请";
+    public static class Builder {
+        private String title = "权限申请";
         private String message = "您还没有申请该权限";
         private String negative = "取消";
         private String positive = "去设置";
-        private PermissionListener PListener;
+        private PermissionListener pListener;
 
         /*设置弹出框标题*/
-        public builder setTitle(String Title) {
-            this.Title = Title;
+        public Builder setTitle(String title) {
+            this.title = title;
             return this;
         }
 
         /*设置弹出框显示的信息*/
-        builder setMessage(String message) {
+        Builder setMessage(String message) {
             this.message = message;
             return this;
         }
 
         /*设置弹出框,确定按钮显示的字体,默认为去设置*/
-        builder setNegative(String negative) {
+        Builder setNegative(String negative) {
             this.negative = negative;
             return this;
         }
 
         /*设置弹出框取消字体显示,默认为取消*/
-        builder setPositive(String positive) {
+        Builder setPositive(String positive) {
             this.positive = positive;
             return this;
         }
 
-        /*去检查单个全先生是否已经申请*/
-        public builder examinePermission(Activity context, String permission, int ResultCode) {
+        /*去检查单个权限是否已经申请*/
+        void examinePermission(Activity context, String permission, int ResultCode) {
             int resultCode = ContextCompat.checkSelfPermission(context, permission);
             if (resultCode == PackageManager.PERMISSION_DENIED) {  /*如果该权限还没有申请就返回-1*/
                 if (rejectPermission(context, permission)) {
-                /*用户拒绝过此权限*/
-                    showPermissionDialog(context, permission, ResultCode, Title, message,
-                            negative, positive);
+                    /*用户拒绝过此权限*/
+                    showPermissionDialog(context, permission, ResultCode, title, message, negative, positive);
                 } else {
-                /*用户没有拒绝过此权限*/
+                    /*用户没有拒绝过此权限*/
                     applyPermission(context, permission, ResultCode);
                 }
-            } else {
+            } else if (resultCode == PackageManager.PERMISSION_GRANTED) {
                 /*已经申请过该权限*/
-                if (PListener != null) PListener.possessPermission();
+                if (pListener != null) {
+                    pListener.possessPermission();
+                }
             }
-            return this;
         }
 
         /*检查单个权限是否被用户拒绝过,返回true说明用户拒绝过此权限*/
@@ -118,7 +115,7 @@ public class PermissionUtils {
             builder.setMessage(message);
             builder.setNegativeButton(negative, (dialog, which) -> {
             /*用户点击了取消按钮,*/
-                if (PListener != null) PListener.cancelPermission();
+                if (pListener != null) pListener.cancelPermission();
             });
             builder.setPositiveButton(positive, (dialog, which) -> {
             /*用户点击了确定按钮,再次去申请权限*/
@@ -128,9 +125,31 @@ public class PermissionUtils {
             builder.show();
         }
 
+        /*用户点击了不再询问后,需要用户跳转到手机设置页面,手动打开权限*/
+        public void settingDialog( Activity context){
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle(title);
+            builder.setMessage(message);
+            builder.setNegativeButton(negative, (dialog, which) -> {
+            /*用户点击了取消按钮,*/
+                if (pListener != null) pListener.cancelPermission();
+            });
+            builder.setPositiveButton(positive, (dialog, which) -> {
+            /*用户点击了确定按钮,再次去申请权限*/
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                Uri uri = Uri.fromParts("package", context.getApplicationContext().getPackageName(), null);
+                intent.setData(uri);
+                context.startActivity(intent);
+            });
+            builder.create();
+            builder.show();
 
-        public void setPermissionListener(PermissionListener PListener) {
-            this.PListener = PListener;
+        }
+
+
+        Builder setPermissionListener(PermissionListener pListener) {
+            this.pListener = pListener;
+            return this;
         }
 
         /*使用接口回调的方式,调用取消事件*/
