@@ -45,6 +45,31 @@ public class PermissionUtils {
     // 允许程序录制声音通过手机或耳机的麦克
     public static final String SEND_SMS = Manifest.permission.SEND_SMS;   //允许程序发送短信
 
+    /*权限数组,申请全部权限时使用*/
+    static String[] permission = {
+            READ_CONTACTS,  //允许程序访问联系人通讯录信息
+            CALL_PHONE,     //允许程序从非系统拨号器里拨打电话
+            READ_CALENDAR,   //允许程序读取用户的日志信息
+            CAMERA,   //允许程序访问摄像头进行拍照
+            BODY_SENSORS,  //感应器权限
+            ACCESS_FINE_LOCATION,    // 允许程序通过GPS芯片接收卫星的定位信息
+            WRITE_EXTERNAL_STORAGE,        //SD卡读写权限
+            RECORD_AUDIO,      // 允许程序录制声音通过手机或耳机的麦克
+            SEND_SMS //允许程序发送短信
+    };
+
+    static int[] permissionCode = {
+            READ_CONTACTS_CODE,
+            CALL_PHONE_CODE,
+            READ_CALENDAR_CODE,
+            CAMERA_CODE,
+            BODY_SENSORS_CODE,
+            ACCESS_FINE_LOCATION_CODE,
+            WRITE_EXTERNAL_STORAGE_CODE,
+            RECORD_AUDIO_CODE,
+            SEND_SMS_CODE
+    };
+
     public static class Builder {
         private String title = "权限申请";
         private String message = "您还没有申请该权限";
@@ -76,13 +101,14 @@ public class PermissionUtils {
             return this;
         }
 
-        /*去检查单个权限是否已经申请*/
+        /*申请当个权限 去检查单个权限是否已经申请*/
         void examinePermission(Activity context, String permission, int ResultCode) {
             int resultCode = ContextCompat.checkSelfPermission(context, permission);
             if (resultCode == PackageManager.PERMISSION_DENIED) {  /*如果该权限还没有申请就返回-1*/
                 if (rejectPermission(context, permission)) {
                     /*用户拒绝过此权限*/
-                    showPermissionDialog(context, permission, ResultCode, title, message, negative, positive);
+                    showPermissionDialog(context, permission, ResultCode, title, message,
+                            negative, positive);
                 } else {
                     /*用户没有拒绝过此权限*/
                     applyPermission(context, permission, ResultCode);
@@ -94,6 +120,13 @@ public class PermissionUtils {
                 }
             }
         }
+
+        /*申请多个权限调用的方法,这里只在开屏页申请一次,不检查是否点击过拒绝*/
+        void morePermission(Activity context, String[] permissions, int ResultCode) {
+            /*检测权限是否已经申请*/
+            ActivityCompat.requestPermissions(context, permissions, ResultCode);
+        }
+
 
         /*检查单个权限是否被用户拒绝过,返回true说明用户拒绝过此权限*/
         private boolean rejectPermission(Activity context, String permission) {
@@ -126,7 +159,7 @@ public class PermissionUtils {
         }
 
         /*用户点击了不再询问后,需要用户跳转到手机设置页面,手动打开权限*/
-        public void settingDialog( Activity context){
+        public void settingDialog(Activity context) {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle(title);
             builder.setMessage(message);
@@ -137,7 +170,8 @@ public class PermissionUtils {
             builder.setPositiveButton(positive, (dialog, which) -> {
             /*用户点击了确定按钮,再次去申请权限*/
                 Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                Uri uri = Uri.fromParts("package", context.getApplicationContext().getPackageName(), null);
+                Uri uri = Uri.fromParts("package", context.getApplicationContext().getPackageName
+                        (), null);
                 intent.setData(uri);
                 context.startActivity(intent);
             });
