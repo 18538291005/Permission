@@ -62,6 +62,13 @@ public class MainActivity extends AppCompatActivity {
     public static boolean useLoop(int[] grantResults, int resultCode) {
         for (int grantResult : grantResults) {
             if (grantResult == resultCode) return true;
+
+
+
+            /*
+            * 提交演示
+            *
+            * */
         }
         return false;
     }
