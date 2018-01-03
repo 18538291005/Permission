@@ -10,6 +10,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 作者 涛雷科技 , 时间 2017/12/25.
  * <p>
@@ -21,8 +24,8 @@ import android.support.v7.app.AlertDialog;
  * 需要构造的目标 和 嵌套在该类内部的Builder类,通过两步操作完成目标类的构造
  */
 
-public class PermissionUtils {
-
+class PermissionUtils {
+    public static final int ALL_PERMISSION_CODE = 10000;
     public static final int READ_CONTACTS_CODE = 10001;
     public static final int CALL_PHONE_CODE = 10002;
     public static final int READ_CALENDAR_CODE = 10003;
@@ -122,9 +125,23 @@ public class PermissionUtils {
         }
 
         /*申请多个权限调用的方法,这里只在开屏页申请一次,不检查是否点击过拒绝*/
-        void morePermission(Activity context, String[] permissions, int ResultCode) {
-            /*检测权限是否已经申请*/
-            ActivityCompat.requestPermissions(context, permissions, ResultCode);
+        void morePermission(Activity context, String[] permissions) {
+            List<String> mPermissionList = new ArrayList<>();
+            for (String permission : permissions) {
+                if (ContextCompat.checkSelfPermission(context, permission) == PackageManager
+                        .PERMISSION_DENIED) {
+                    mPermissionList.add(permission);
+                }
+            }
+            if (mPermissionList.isEmpty()) {
+                /*都已经授权了,通过接口返回*/
+                if (pListener != null) {
+                    pListener.possessPermission();
+                }
+            } else {
+                String[] noPermission = mPermissionList.toArray(new String[mPermissionList.size()]);
+                ActivityCompat.requestPermissions(context, noPermission, ALL_PERMISSION_CODE);
+            }
         }
 
 
@@ -159,7 +176,7 @@ public class PermissionUtils {
         }
 
         /*用户点击了不再询问后,需要用户跳转到手机设置页面,手动打开权限*/
-        public void settingDialog(Activity context) {
+        void settingDialog(Activity context) {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle(title);
             builder.setMessage(message);
